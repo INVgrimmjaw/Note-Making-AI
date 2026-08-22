@@ -1,11 +1,26 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "bundler",
     "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "rootDir": "./src",
+    "outDir": "./dist",
+
     "strict": true,
     "esModuleInterop": true,
-    "ignoreDeprecations": "6.0"
+    "skipLibCheck": true,
+
+    "types": ["node"]
   },
-  "include": ["src"]
+
+  "include": [
+    "src/**/*.ts",
+    "src/generated/**/*.ts"
+  ],
+
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
