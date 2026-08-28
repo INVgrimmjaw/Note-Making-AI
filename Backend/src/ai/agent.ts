@@ -23,7 +23,7 @@ Rules:
 
 Examples:
 User: "I woke up at 5am"
-Search query: "woke up at 5am"
+Search query: "wake up at 5am"
 
 User: "I finished reading"
 Search query: "reading"
@@ -65,7 +65,9 @@ Always normalize before searching.
             const args = JSON.parse(toolCall.function.arguments || "{}");
             const executor = toolRegistry[toolName];
 
-            if (!executor) { throw new Error(`Unknown tool: ${toolName}`); }
+            if (!executor) {
+                throw new Error(`Unknow tool: ${toolName}`);
+            }
 
             const result = await executor(userId, args);
 
@@ -76,7 +78,8 @@ Always normalize before searching.
             });
         }
     }
-    throw new Error("Max steps reached without a final answer.");
+
+    throw new Error("Agent exceeded max steps");
     /*
     const completion = await client.chat.completions.create({
         model: "gpt-4.1",

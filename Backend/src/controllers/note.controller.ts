@@ -1,25 +1,15 @@
 import { Request, Response } from "express";
 import { ApiError } from "../utils/ApiError.js";
-import { runAgent } from "../ai/agent.js";
+import { noteService } from "../services/note.service.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-export const agentChat = async (req: Request, res: Response) => {
+export const getAllNotes = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id as string;
-    // console.log({ userId });
-    const { message } = req.body;
-
-    const result = await runAgent(userId, message);
-
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          data: result,
-        },
-        "Task executed"
-      )
-    );
+    const notes = await noteService.getAll(userId);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, notes, "notes fetched successfully"));
   } catch (error: unknown) {
     console.error("Login User Error: ", error);
 

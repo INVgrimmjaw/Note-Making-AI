@@ -52,9 +52,9 @@ export const verifyJwt = async (
       });
     }
 
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      message: "Invalid or expired token",
+      message: "Internal Server Error",
       errors: [],
     });
   }

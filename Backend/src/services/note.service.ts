@@ -2,23 +2,22 @@ import { prisma } from "../lib/prisma.js";
 import { normalize } from "../utils/normalize.js";
 
 export const noteService = {
+  async getAll(userId: string) {
+    return prisma.note.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  },
+
   async create(userId: string, content: string) {
     return prisma.note.create({
       data: {
         content,
         userId,
-      },
-    });
-  },
-
-  async update(noteId: string, userId: string, content: string) {
-    return prisma.note.updateMany({
-      where: {
-        id: noteId,
-        userId,
-      },
-      data: {
-        content,
       },
     });
   },
@@ -41,14 +40,14 @@ export const noteService = {
   },
 
   async findByContent(userId: string, content: string) {
-  const notes = await prisma.note.findMany({
-    where: { userId },
-  });
+    const notes = await prisma.note.findMany({
+      where: { userId },
+    });
 
-  const target = normalize(content);
+    const target = normalize(content);
 
-  return notes.find((note) => normalize(note.content) === target);
-},
+    return notes.find((note) => normalize(note.content) === target);
+  },
 
   async searchCompletedNotes(userId: string) {
     return prisma.note.findMany({
@@ -78,13 +77,14 @@ export const noteService = {
     });
   },
 
-  async getAll(userId: string) {
-    return prisma.note.findMany({
+  async update(noteId: string, userId: string, content: string) {
+    return prisma.note.updateMany({
       where: {
+        id: noteId,
         userId,
       },
-      orderBy: {
-        createdAt: "desc",
+      data: {
+        content,
       },
     });
   },

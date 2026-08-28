@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
 import { ApiError } from "../utils/ApiError.js";
 import { prisma } from "../lib/prisma.js";
-import { encryptPassword } from "../utils/auth/hash.js";
+import { comparePassword, encryptPassword } from "../utils/auth/hash.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../utils/auth/jwt.js";
 import { setAuthCookies } from "../utils/auth/helper.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/auth/jwt.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -24,8 +27,8 @@ export const registerUser = async (req: Request, res: Response) => {
 
     const user = await prisma.user.create({
       data: {
-        name: name.toLowerCase(),
-        email: email.toLowerCase(),
+        name: name.toLowerCase().trim(),
+        email: email.toLowerCase().trim(),
         password: hashedPassword,
       },
     });
@@ -34,6 +37,7 @@ export const registerUser = async (req: Request, res: Response) => {
     const refreshToken = generateRefreshToken(user);
 
     setAuthCookies(res, accessToken, refreshToken);
+
     return res.status(201).json(
       new ApiResponse(
         201,
@@ -51,7 +55,7 @@ export const registerUser = async (req: Request, res: Response) => {
       )
     );
   } catch (error: unknown) {
-    console.error("Register User Error: ", error);
+    console.error("Regsiter User Error: ", error);
 
     if (error instanceof ApiError) {
       return res.status(error.statusCode).json({
@@ -85,12 +89,15 @@ export const loginUser = async (req: Request, res: Response) => {
 
     const isPasswordCorrect = await comparePassword(password, user.password);
 
+    // console.log({ isPasswordCorrect });
+
     if (!isPasswordCorrect) {
       throw new ApiError(400, "Invalid credentials");
     }
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
+
     setAuthCookies(res, accessToken, refreshToken);
 
     return res.status(200).json(
@@ -98,6 +105,7 @@ export const loginUser = async (req: Request, res: Response) => {
         200,
         {
           user: {
+            id: user.id,
             name: user.name,
             email: user.email,
             createdAt: user.createdAt,
@@ -126,19 +134,16 @@ export const loginUser = async (req: Request, res: Response) => {
     });
   }
 };
+
 export const logoutUser = async (req: Request, res: Response) => {
   try {
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
-    
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        null,
-        "User logged out successfully"
-      )
-    );
-  } catch (error : unknown) {
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "User logged out successfully"));
+  } catch (error: unknown) {
     console.error("Login User Error: ", error);
 
     if (error instanceof ApiError) {
@@ -159,7 +164,7 @@ export const logoutUser = async (req: Request, res: Response) => {
 
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     const user = await prisma.user.findUnique({
       where: {
@@ -180,7 +185,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     return res
       .status(200)
       .json(new ApiResponse(200, user, "User details fetched successfully"));
-  } catch (error : unknown) {
+  } catch (error) {
     console.error("Login User Error: ", error);
 
     if (error instanceof ApiError) {
