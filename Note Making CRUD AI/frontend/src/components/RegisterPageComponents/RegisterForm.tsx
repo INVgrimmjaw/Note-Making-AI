@@ -1,0 +1,158 @@
+import { Card, CardContent } from "../ui/card";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import {
+  registerUserSchema,
+  type RegisterUserFormData,
+} from "@/schemas/auth.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { toast } from "sonner";
+import { registerUser } from "@/api/auth/auth.api";
+import { Spinner } from "../ui/spinner";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/store/slices/authSlice";
+
+const RegisterForm = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<RegisterUserFormData>({
+    resolver: zodResolver(registerUserSchema),
+  });
+
+  const onSubmit = async (data: RegisterUserFormData) => {
+    console.log(data);
+    try {
+      setLoading(true);
+      setServerError(null);
+      const response = await registerUser(data);
+      dispatch(setUser(response.data.user));
+      toast.success("Account Created Successfully");
+      navigate("/");
+      reset();
+    } catch (error: any) {
+      setServerError(error.message);
+      toast(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative w-full max-w-md px-6">
+      <Card className="bg-[#111827]/80 backdrop-blur border border-white/10 rounded-2xl shadow-2xl">
+        <CardContent className="p-8">
+          {/* HEADER */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-200">
+              NoterAI
+            </h1>
+            <p className="text-gray-400 text-sm mt-2">Create Your Account</p>
+          </div>
+
+          {/* FORM */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-10"
+          >
+            {/* NAME */}
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs text-gray-400">Name</Label>
+              <div className="relative">
+                <Input
+                  type="text"
+                  {...register("name")}
+                  placeholder="Enter your name"
+                  className="bg-[#0b0f19] border-white/10 focus-visible:ring-indigo-500 text-gray-200 py-5"
+                />
+                {errors.name && (
+                  <p className="absolute left-0 top-full mt-1 text-xs text-red-400">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+            </div>
+            {/* EMAIL */}
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs text-gray-400">Email</Label>
+              <div className="relative">
+                <Input
+                  type="email"
+                  {...register("email")}
+                  placeholder="Enter your email"
+                  className="bg-[#0b0f19] border-white/10 focus-visible:ring-indigo-500 text-gray-200 py-5"
+                />
+                {errors.email && (
+                  <p className="absolute left-0 top-full mt-1 text-xs text-red-400">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* PASSWORD */}
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs text-gray-400">Password</Label>
+              <div className="relative">
+                <Input
+                  type="password"
+                  {...register("password")}
+                  placeholder="•••••••"
+                  className="bg-[#0b0f19] border-white/10 focus-visible:ring-indigo-500 text-gray-200 py-5"
+                />
+                {errors.password && (
+                  <p className="absolute left-0 top-full mt-1 text-xs text-red-400">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Register BUTTON */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-900/30 cursor-pointer py-5"
+            >
+              {loading ? (
+                <div className="flex gap-2 justify-center items-center">
+                  <Spinner />
+                  Creating Your Account
+                </div>
+              ) : (
+                "Register"
+              )}
+            </Button>
+          </form>
+
+          {/* DIVIDER */}
+          <div className="flex items-center gap-4 my-6">
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-xs text-gray-500">OR</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
+
+          {/* SIGNUP */}
+          <p className="text-center text-sm text-gray-400 mt-6">
+            Already have an account?{" "}
+            <Link to="/login" className="text-indigo-400 hover:text-indigo-300">
+              Sign In
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default RegisterForm;
